@@ -1,12 +1,10 @@
 use std::collections::BinaryHeap;
 
 fn main() {
-    let mut column_1: BinaryHeap<u32> = BinaryHeap::new();
-    let mut column_2: BinaryHeap<u32> = BinaryHeap::new();
-    std::io::stdin()
+    let (column_1, column_2): (BinaryHeap<u32>, BinaryHeap<u32>) = std::io::stdin()
         .lines()
         .map(|line_result| line_result.expect("Stdin error"))
-        .for_each(|line| {
+        .map(|line| {
             let mut numbers = line
                 .split_whitespace()
                 .map(|word| word.parse::<u32>().expect("Not an unsigned integer"));
@@ -15,9 +13,9 @@ fn main() {
             if numbers.next().is_some() {
                 panic!("More than two numbers in line");
             }
-            column_1.push(number_1);
-            column_2.push(number_2);
-        });
+            (number_1, number_2)
+        })
+        .unzip();
     let column_1 = column_1.into_sorted_vec();
     let column_2 = column_2.into_sorted_vec();
     let output = column_1
