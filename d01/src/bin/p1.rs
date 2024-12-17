@@ -22,7 +22,7 @@ fn main() {
     let column_2 = column_2.into_sorted_vec();
     let output = column_1
         .into_iter()
-        .zip(column_2.into_iter())
+        .zip(column_2)
         .map(|(num_1, num_2)| num_1.abs_diff(num_2))
         .sum::<u32>();
     println!("{}", output);
