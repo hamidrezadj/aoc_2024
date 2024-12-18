@@ -21,10 +21,7 @@ fn main() {
             let first_number = entry.first().expect("Line empty");
             let last_number = entry.last().expect("Line empty");
             let ordering = last_number.cmp(first_number);
-            (entry, ordering)
-        })
-        .map(|(entry, ordering)| {
-            let problematic_idxs =
+            let entry_safety_result =
                 entry
                     .windows(2)
                     .enumerate()
@@ -32,10 +29,15 @@ fn main() {
                         Ordering::Less if is_window_safely_descending(window) => Ok(()),
                         Ordering::Greater if is_window_safely_ascending(window) => Ok(()),
                         Ordering::Equal => {
+                            // This means that the first and last number are equal.
+                            // So both need to be checked.
                             let problematic_idxs = vec![0, entry.len() - 1];
                             Err(problematic_idxs)
                         }
                         _ if idx == 0 => {
+                            // This might mean that the last number has thrown off
+                            // the ordering. So the last number has to be checked
+                            // as well.
                             let problematic_idxs = vec![0, 1, entry.len() - 1];
                             Err(problematic_idxs)
                         }
@@ -44,9 +46,9 @@ fn main() {
                             Err(problematic_idxs)
                         }
                     });
-            (entry, problematic_idxs)
+            (entry, entry_safety_result)
         })
-        .filter(|(entry, problematic_idx)| match problematic_idx {
+        .filter(|(entry, entry_safety_result)| match entry_safety_result {
             Ok(()) => true,
             Err(problematic_idxs) => problematic_idxs.iter().any(|problematic_idx| {
                 let mut entry = entry.clone();
