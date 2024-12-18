@@ -19,7 +19,7 @@ fn main() {
         })
         .map(|entry| {
             let first_number = entry.first().expect("Line empty");
-            let last_number = entry.iter().last().expect("Line empty");
+            let last_number = entry.last().expect("Line empty");
             let ordering = last_number.cmp(first_number);
             (entry, ordering)
         })

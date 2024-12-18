@@ -19,84 +19,53 @@ fn main() {
         })
         .map(|entry| {
             let first_number = entry.first().expect("Line empty");
-            let last_number = entry.iter().last().expect("Line empty");
+            let last_number = entry.last().expect("Line empty");
             let ordering = last_number.cmp(first_number);
             (entry, ordering)
         })
         .map(|(entry, ordering)| {
-            let mut problematic_idx = None;
-            entry
-                .windows(2)
-                .enumerate()
-                .all(|(idx, window)| match ordering {
-                    Ordering::Less
-                        if window[0] > window[1] && (1..=3).contains(&(window[0] - window[1])) =>
-                    {
-                        true
-                    }
-                    Ordering::Greater
-                        if window[0] < window[1] && (1..=3).contains(&(window[1] - window[0])) =>
-                    {
-                        true
-                    }
-                    _ => {
-                        problematic_idx = Some(idx);
-                        false
-                    }
-                });
-            (entry, ordering, problematic_idx)
+            let problematic_idxs =
+                entry
+                    .windows(2)
+                    .enumerate()
+                    .try_for_each(|(idx, window)| match ordering {
+                        Ordering::Less if is_window_safely_descending(window) => Ok(()),
+                        Ordering::Greater if is_window_safely_ascending(window) => Ok(()),
+                        Ordering::Equal => {
+                            let problematic_idxs = vec![0, entry.len() - 1];
+                            Err(problematic_idxs)
+                        }
+                        _ if idx == 0 => {
+                            let problematic_idxs = vec![0, 1, entry.len() - 1];
+                            Err(problematic_idxs)
+                        }
+                        _ => {
+                            let problematic_idxs = vec![idx, idx + 1];
+                            Err(problematic_idxs)
+                        }
+                    });
+            (entry, ordering, problematic_idxs)
         })
         .filter(|(entry, ordering, problematic_idx)| match problematic_idx {
-            None => true,
-            Some(idx) => {
-                let mut try_1 = entry.clone();
-                try_1.remove(*idx);
-                let is_try_1_good = try_1.windows(2).all(|window| match ordering {
-                    Ordering::Less
-                        if window[0] > window[1] && (1..=3).contains(&(window[0] - window[1])) =>
-                    {
-                        true
-                    }
-                    Ordering::Greater
-                        if window[0] < window[1] && (1..=3).contains(&(window[1] - window[0])) =>
-                    {
-                        true
-                    }
+            Ok(()) => true,
+            Err(problematic_idxs) => problematic_idxs.iter().any(|problematic_idx| {
+                let mut entry = entry.clone();
+                entry.remove(*problematic_idx);
+                entry.windows(2).all(|window| match ordering {
+                    Ordering::Less if is_window_safely_descending(window) => true,
+                    Ordering::Greater if is_window_safely_ascending(window) => true,
                     _ => false,
-                });
-                let mut try_2 = entry.clone();
-                try_2.remove(*idx + 1);
-                let is_try_2_good = try_2.windows(2).all(|window| match ordering {
-                    Ordering::Less
-                        if window[0] > window[1] && (1..=3).contains(&(window[0] - window[1])) =>
-                    {
-                        true
-                    }
-                    Ordering::Greater
-                        if window[0] < window[1] && (1..=3).contains(&(window[1] - window[0])) =>
-                    {
-                        true
-                    }
-                    _ => false,
-                });
-                let mut try_3 = entry.clone();
-                try_3.remove(try_3.len() - 1);
-                let is_try_3_good = try_3.windows(2).all(|window| match ordering {
-                    Ordering::Less
-                        if window[0] > window[1] && (1..=3).contains(&(window[0] - window[1])) =>
-                    {
-                        true
-                    }
-                    Ordering::Greater
-                        if window[0] < window[1] && (1..=3).contains(&(window[1] - window[0])) =>
-                    {
-                        true
-                    }
-                    _ => false,
-                });
-                is_try_1_good || is_try_2_good || is_try_3_good
-            }
+                })
+            }),
         })
         .count();
     println!("{}", safe_entry_count);
+}
+
+fn is_window_safely_ascending(window: &[u32]) -> bool {
+    window[0] < window[1] && (1..=3).contains(&(window[1] - window[0]))
+}
+
+fn is_window_safely_descending(window: &[u32]) -> bool {
+    window[0] > window[1] && (1..=3).contains(&(window[0] - window[1]))
 }
