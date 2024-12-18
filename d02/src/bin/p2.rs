@@ -19,33 +19,27 @@ fn main() {
             (entry, ordering)
         })
         .map(|(entry, ordering)| {
-            let mut problematic_idx = 0usize;
-            let problematic_option =
-                match entry
-                    .windows(2)
-                    .enumerate()
-                    .all(|(idx, window)| match ordering {
-                        Ordering::Less
-                            if window[0] > window[1]
-                                && (1..=3).contains(&(window[0] - window[1])) =>
-                        {
-                            true
-                        }
-                        Ordering::Greater
-                            if window[0] < window[1]
-                                && (1..=3).contains(&(window[1] - window[0])) =>
-                        {
-                            true
-                        }
-                        _ => {
-                            problematic_idx = idx;
-                            false
-                        }
-                    }) {
-                    true => None,
-                    false => Some(problematic_idx),
-                };
-            (entry, ordering, problematic_option)
+            let mut problematic_idx = None;
+            entry
+                .windows(2)
+                .enumerate()
+                .all(|(idx, window)| match ordering {
+                    Ordering::Less
+                        if window[0] > window[1] && (1..=3).contains(&(window[0] - window[1])) =>
+                    {
+                        true
+                    }
+                    Ordering::Greater
+                        if window[0] < window[1] && (1..=3).contains(&(window[1] - window[0])) =>
+                    {
+                        true
+                    }
+                    _ => {
+                        problematic_idx = Some(idx);
+                        false
+                    }
+                });
+            (entry, ordering, problematic_idx)
         })
         .filter(|(entry, ordering, problematic_idx)| match problematic_idx {
             None => true,
