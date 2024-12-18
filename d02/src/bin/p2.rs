@@ -74,7 +74,22 @@ fn main() {
                     }
                     _ => false,
                 });
-                is_try_1_good || is_try_2_good
+                let mut try_3 = entry.clone();
+                try_3.remove(try_3.len() - 1);
+                let is_try_3_good = try_3.windows(2).all(|window| match ordering {
+                    Ordering::Less
+                        if window[0] > window[1] && (1..=3).contains(&(window[0] - window[1])) =>
+                    {
+                        true
+                    }
+                    Ordering::Greater
+                        if window[0] < window[1] && (1..=3).contains(&(window[1] - window[0])) =>
+                    {
+                        true
+                    }
+                    _ => false,
+                });
+                is_try_1_good || is_try_2_good || is_try_3_good
             }
         })
         .count();
