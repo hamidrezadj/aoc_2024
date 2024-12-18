@@ -18,7 +18,7 @@ fn main() {
             let ordering = last_number.cmp(first_number);
             (entry, ordering)
         })
-        .map(|(entry, ordering)| {
+        .filter(|(entry, ordering)| {
             entry.windows(2).all(|window| match ordering {
                 Ordering::Less
                     if window[0] > window[1] && (1..=3).contains(&(window[0] - window[1])) =>
@@ -33,7 +33,6 @@ fn main() {
                 _ => false,
             })
         })
-        .filter(|condition| *condition)
         .count();
     println!("{}", safe_entry_count);
 }
