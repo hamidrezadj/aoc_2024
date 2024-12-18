@@ -12,6 +12,11 @@ fn main() {
                 })
                 .collect::<Vec<u32>>()
         })
+        .inspect(|entry| {
+            if entry.len() < 2 {
+                panic!("Less than two numbers in line");
+            }
+        })
         .map(|entry| {
             let first_number = entry.first().expect("Line empty");
             let last_number = entry.iter().last().expect("Line empty");
