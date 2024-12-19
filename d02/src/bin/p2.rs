@@ -51,6 +51,10 @@ fn main() {
         .filter(|(entry, entry_safety_result)| match entry_safety_result {
             Ok(()) => true,
             Err(problematic_idxs) => problematic_idxs.iter().any(|problematic_idx| {
+                if entry.len() < 3 {
+                    // Fixing an entry that has less than 3 numbers is ambiguous.
+                    eprintln!("Warning: Fixing an entry with only 2 numbers always makes it safe");
+                }
                 let mut entry = entry.clone();
                 entry.remove(*problematic_idx);
                 let first_number = entry.first().expect("Line empty");
