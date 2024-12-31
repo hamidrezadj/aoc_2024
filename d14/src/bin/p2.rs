@@ -1,9 +1,6 @@
 use std::{collections::BinaryHeap, env, io};
 
 fn main() {
-    let mut args = env::args().skip(1).take(2);
-    let control_argument = args.next();
-    let target_time = args.next();
     let x_len = env::var("X_LEN")
         .map(|x| {
             x.parse::<i64>()
@@ -16,6 +13,9 @@ fn main() {
                 .expect("Y_LEN environment variable not a 64 bit integer")
         })
         .unwrap_or(103);
+    if x_len < 1 || y_len < 1 {
+        panic!("length or width of the room can't be negative");
+    }
     let input: Vec<((i64, i64), (i64, i64))> = io::stdin()
         .lines()
         .map(|line_result| line_result.expect("Stdin error"))
@@ -48,9 +48,12 @@ fn main() {
             ((px, py), (vx, vy))
         })
         .collect();
+    let mut args = env::args().skip(1);
+    let control_argument = args.next();
     match control_argument {
         Some(ca) if ca == "draw-until" => {
-            let target_time = target_time
+            let target_time = args
+                .next()
                 .expect("No time target argument passed")
                 .parse::<i64>()
                 .expect("Time target argument not an integer that fits in 64 bits");
@@ -66,7 +69,8 @@ fn main() {
             }
         }
         Some(ca) if ca == "draw" => {
-            let time = target_time
+            let time = args
+                .next()
                 .expect("No time target argument passed")
                 .parse::<i64>()
                 .expect("Time target argument not an integer that fits in 64 bits");
@@ -82,8 +86,48 @@ fn main() {
                 .collect();
             draw(x_len, time, buffer);
         }
-        Some(_) => panic!("Invalid argument: Either use 'draw-until time' or 'draw time'"),
-        None => println!("{}", 103 * 75 + 65),
+        Some(ca) if ca == "calculate" => {
+            if !is_prime(x_len) || !is_prime(y_len) {
+                eprintln!("Warning: The width or length of the room isn't prime.");
+                eprintln!("Warning: The logic of this solution may not hold true.");
+            }
+            let ver_offset = args
+                .next()
+                .expect("No first vertical time offset argument passed")
+                .parse::<i64>()
+                .expect("Time argument not an integer that fits in 64 bits");
+            let hor_offset = args
+                .next()
+                .expect("No first horizontal time offset argument passed")
+                .parse::<i64>()
+                .expect("Time argument not an integer that fits in 64 bits");
+            let ver_period = x_len;
+            let hor_period = y_len;
+            // tree_time = ver_period * k1 + ver_offset = hor_period * k2 + hor_offset
+            // k2 = (ver_period * k1 + ver_offset - hor_offset) / hor_period
+            // k2 must be an integer.
+            let k1 = (0..)
+                .filter(|k1| (ver_period * k1 + ver_offset - hor_offset) % hor_period == 0)
+                .next()
+                .unwrap();
+            let tree_time = ver_period * k1 + ver_offset;
+            println!("{}", tree_time);
+        }
+        _ => {
+            eprintln!("Invalid arguments.");
+            eprintln!("Use cases:");
+            eprintln!();
+            eprintln!("p2 draw-untill (target_time)");
+            eprintln!("e.g. p2 draw-untill 1000");
+            eprintln!();
+            eprintln!("p2 draw (target_time)");
+            eprintln!("e.g. p2 draw 8000");
+            eprintln!();
+            eprintln!("p2 calculate (first_vertical_lines_appearance_time) (first_horizontal_lines_appearance_time)");
+            eprintln!("e.g. p2 calculate 13 65");
+            eprintln!();
+            panic!("Invalid argument pattern.");
+        }
     }
 }
 
@@ -112,4 +156,17 @@ fn draw(x_len: i64, time: i64, buffer: BinaryHeap<(i64, i64)>) {
     });
     print!("\n\n\n\n");
     println!("{}", "---".repeat(x_len as usize));
+}
+
+fn is_prime(n: i64) -> bool {
+    if n < 2 {
+        return false;
+    }
+    let mut is_prime = true;
+    for i in 2..n {
+        if n % i == 0 {
+            is_prime = false;
+        }
+    }
+    is_prime
 }
