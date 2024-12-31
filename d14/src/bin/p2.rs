@@ -58,8 +58,8 @@ fn main() {
             for time in 1..=target_time {
                 let mut buffer: BinaryHeap<(i64, i64)> = BinaryHeap::new();
                 input.iter_mut().for_each(|((px, py), (vx, vy))| {
-                    *px = px.checked_add(*vx).expect("Overflow").rem_euclid(x_len);
-                    *py = py.checked_add(*vy).expect("Overflow").rem_euclid(y_len);
+                    *px = (*px + *vx).rem_euclid(x_len);
+                    *py = (*py + *vy).rem_euclid(y_len);
                     buffer.push((*py, *px));
                 });
                 draw(x_len, time, buffer);
@@ -73,10 +73,10 @@ fn main() {
             let buffer: BinaryHeap<(i64, i64)> = input
                 .iter()
                 .map(|((px, py), (vx, vy))| {
-                    let dx = vx.checked_mul(time).expect("Overflow");
-                    let dy = vy.checked_mul(time).expect("Overflow");
-                    let x = px.checked_add(dx).expect("Overflow").rem_euclid(x_len);
-                    let y = py.checked_add(dy).expect("Overflow").rem_euclid(y_len);
+                    let dx = vx * time;
+                    let dy = vy * time;
+                    let x = (px + dx).rem_euclid(x_len);
+                    let y = (py + dy).rem_euclid(y_len);
                     (y, x)
                 })
                 .collect();

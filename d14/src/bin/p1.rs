@@ -45,10 +45,10 @@ fn main() {
             ((px, py), (vx, vy))
         })
         .map(|((position_x, position_y), (velocity_x, velocity_y))| {
-            let delta_x = velocity_x.checked_mul(100).expect("Overflow");
-            let delta_y = velocity_y.checked_mul(100).expect("Overflow");
-            let x = position_x.checked_add(delta_x).expect("overflow");
-            let y = position_y.checked_add(delta_y).expect("overflow");
+            let delta_x = velocity_x * 100;
+            let delta_y = velocity_y * 100;
+            let x = position_x + delta_x;
+            let y = position_y + delta_y;
             let x = x.rem_euclid(x_len);
             let y = y.rem_euclid(y_len);
             (x, y)
@@ -68,7 +68,7 @@ fn main() {
             quadrants_count
         })
         .into_iter()
-        .reduce(|acc, q| acc.checked_mul(q).expect("Overflow"))
+        .reduce(|acc, q| acc * q)
         .expect("Empty input");
     println!("{}", output);
 }
