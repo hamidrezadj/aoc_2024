@@ -27,3 +27,6 @@ members = [
   # "d24",
   # "d25",
 ]
+
+[profile.release]
+overflow-checks = false
