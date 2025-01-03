@@ -14,7 +14,7 @@ fn main() {
         })
         .unwrap_or(103);
     if x_len < 1 || y_len < 1 {
-        panic!("length or width of the room can't be negative");
+        panic!("Length or width of the room can't be non-positive");
     }
     let input: Vec<((i64, i64), (i64, i64))> = io::stdin()
         .lines()

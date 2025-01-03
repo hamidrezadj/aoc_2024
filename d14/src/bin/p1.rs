@@ -13,6 +13,9 @@ fn main() {
                 .expect("Y_LEN environment variable not a 64 bit integer")
         })
         .unwrap_or(103);
+    if x_len < 1 || y_len < 1 {
+        panic!("Length or width of the room can't be non-positive");
+    }
     let output = io::stdin()
         .lines()
         .map(|line_result| line_result.expect("Stdin error"))
