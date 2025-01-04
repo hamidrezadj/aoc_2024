@@ -1,5 +1,6 @@
 use std::{
-    collections::{hash_map::Entry, BTreeSet, HashMap},
+    cmp::Reverse,
+    collections::{hash_map::Entry, BinaryHeap, HashMap},
     ops::Not,
 };
 
@@ -79,8 +80,9 @@ fn main() {
         direction: Direction::East,
     };
     let mut shortest_path_tree: HashMap<Node, u64> = HashMap::from([(start_node, 0)]);
-    let mut neighbours_of_tree: BTreeSet<(u64, Node)> = neighbours(&input, start_node, 0);
-    while let Some((length, node)) = neighbours_of_tree.pop_first() {
+    let mut neighbours_of_tree: BinaryHeap<Reverse<(u64, Node)>> =
+        neighbours(&input, start_node, 0);
+    while let Some(Reverse((length, node))) = neighbours_of_tree.pop() {
         let is_end = {
             let (i, j) = node.position;
             input[i][j] == 'E'
@@ -99,7 +101,7 @@ fn main() {
     }
 }
 
-fn neighbours(input: &[Vec<char>], node: Node, length: u64) -> BTreeSet<(u64, Node)> {
+fn neighbours(input: &[Vec<char>], node: Node, length: u64) -> BinaryHeap<Reverse<(u64, Node)>> {
     let next_node_in_same_direction = Some(node.position)
         .into_iter()
         .map(|position| node.direction.forward_position(position))
@@ -119,7 +121,10 @@ fn neighbours(input: &[Vec<char>], node: Node, length: u64) -> BTreeSet<(u64, No
             direction,
         })
         .map(|node| (length + 1000, node));
-    next_node_in_same_direction.chain(rotated_nodes).collect()
+    next_node_in_same_direction
+        .chain(rotated_nodes)
+        .map(Reverse)
+        .collect()
 }
 
 impl Direction {
