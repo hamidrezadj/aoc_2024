@@ -102,23 +102,18 @@ fn main() {
 }
 
 fn neighbours(input: &[Vec<char>], node: Node, length: u64) -> BinaryHeap<Reverse<(u64, Node)>> {
-    let next_node_in_same_direction = Some(node.position)
+    let next_node_in_same_direction = Some(node)
         .into_iter()
-        .map(|position| node.direction.forward_position(position))
-        .filter(|&(i, j)| input[i][j] != '#')
-        .map(|position| Node {
-            position,
-            direction: node.direction,
-        })
+        .map(Node::forward)
+        .filter(|node| input[node.position.0][node.position.1] != '#')
         .map(|node| (length + 1, node));
-    let rotated_nodes = Some(node.position)
+    let rotated_nodes = Some(node)
         .into_iter()
-        .flat_map(|position| node.direction.side_positions(position))
-        .filter(|&(i, j)| input[i][j] != '#')
-        .map(|side_position| Direction::find_direction(side_position, node.position))
-        .map(|direction| Node {
+        .flat_map(Node::sides)
+        .filter(|node| input[node.position.0][node.position.1] != '#')
+        .map(|side_node| Node {
             position: node.position,
-            direction,
+            direction: side_node.direction,
         })
         .map(|node| (length + 1000, node));
     next_node_in_same_direction
@@ -127,37 +122,43 @@ fn neighbours(input: &[Vec<char>], node: Node, length: u64) -> BinaryHeap<Revers
         .collect()
 }
 
-impl Direction {
-    fn forward_position(&self, position: (usize, usize)) -> (usize, usize) {
-        let (i, j) = position;
-        match self {
+impl Node {
+    fn forward(self) -> Node {
+        let (i, j) = self.position;
+        let position = match self.direction {
             Direction::East => (i, j + 1),
             Direction::South => (i + 1, j),
             Direction::West => (i, j - 1),
             Direction::North => (i - 1, j),
+        };
+        Node {
+            position,
+            direction: self.direction,
         }
     }
-    fn side_positions(&self, position: (usize, usize)) -> [(usize, usize); 2] {
-        let (i, j) = position;
-        match self {
-            Direction::East | Direction::West => [(i + 1, j), (i - 1, j)],
-            Direction::South | Direction::North => [(i, j + 1), (i, j - 1)],
-        }
-    }
-
-    fn find_direction(position2: (usize, usize), position1: (usize, usize)) -> Direction {
-        let (i2, j2) = position2;
-        let (i1, j1) = position1;
-        if i2 == i1 && j2 == j1 + 1 {
-            Direction::East
-        } else if i2 == i1 + 1 && j2 == j1 {
-            Direction::South
-        } else if i2 == i1 && j2 + 1 == j1 {
-            Direction::West
-        } else if i2 + 1 == i1 && j2 == j1 {
-            Direction::North
-        } else {
-            panic!("Not a proper use of find_direction")
+    fn sides(self) -> [Node; 2] {
+        let (i, j) = self.position;
+        match self.direction {
+            Direction::East | Direction::West => [
+                Node {
+                    position: (i + 1, j),
+                    direction: Direction::South,
+                },
+                Node {
+                    position: (i - 1, j),
+                    direction: Direction::North,
+                },
+            ],
+            Direction::South | Direction::North => [
+                Node {
+                    position: (i, j + 1),
+                    direction: Direction::East,
+                },
+                Node {
+                    position: (i, j - 1),
+                    direction: Direction::West,
+                },
+            ],
         }
     }
 }
