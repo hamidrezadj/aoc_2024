@@ -75,14 +75,10 @@ fn main() {
         .find(|((_i, _j), ch)| *ch == 'S')
         .map(|((i, j), _ch)| (i, j))
         .unwrap();
-    let start_node = Node {
-        position: start_position,
-        direction: Direction::East,
-    };
 
-    let mut shortest_path_tree: HashMap<Node, u64> = HashMap::from([(start_node, 0)]);
+    let mut shortest_path_tree: HashMap<Node, u64> = HashMap::new();
     let mut neighbours_of_tree: BinaryHeap<Reverse<(u64, Node)>> =
-        forward_neighbours(&input, start_node, 0);
+        starting_neighbours(start_position);
     while let Some(Reverse((length, node))) = neighbours_of_tree.pop() {
         match shortest_path_tree.entry(node) {
             Entry::Occupied(_) => continue,
@@ -185,6 +181,25 @@ fn forward_neighbours(
         .chain(rotated_nodes)
         .map(Reverse)
         .collect()
+}
+
+fn starting_neighbours(start_position: (usize, usize)) -> BinaryHeap<Reverse<(u64, Node)>> {
+    BinaryHeap::from([
+        Reverse((
+            0,
+            Node {
+                position: start_position,
+                direction: Direction::East,
+            },
+        )),
+        Reverse((
+            2000,
+            Node {
+                position: start_position,
+                direction: Direction::West,
+            },
+        )),
+    ])
 }
 
 impl Node {
