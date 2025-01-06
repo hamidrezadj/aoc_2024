@@ -58,21 +58,99 @@ fn main() {
         panic!("Unexpected pattern: more than five lines")
     }
 
-    let output = (0..)
-        .map(|a| State { a, b, c, ip: 0 })
-        .map(|initial_state| cpu_factory(initial_state, &instructions))
-        .enumerate()
-        .try_for_each(|(a, cpu)| {
-            let instructions = instructions.iter().copied().map(|i| i as u8);
-            if cpu.eq(instructions) {
-                ControlFlow::Break(a)
-            } else {
-                ControlFlow::Continue(())
+    let mut args = std::env::args().skip(1);
+    match args.next().unwrap_or_default().as_str() {
+        "brute" => {
+            let output = (0..)
+                .map(|a| State { a, b, c, ip: 0 })
+                .map(|initial_state| cpu_factory(initial_state, &instructions))
+                .enumerate()
+                .try_for_each(|(a, cpu)| {
+                    let instructions = instructions.iter().copied().map(|i| i as u8);
+                    if cpu.eq(instructions) {
+                        ControlFlow::Break(a)
+                    } else {
+                        ControlFlow::Continue(())
+                    }
+                })
+                .break_value()
+                .unwrap();
+            println!("{}", output);
+        }
+        "print" => {
+            for a in 0.. {
+                let initial_state = State { a, b, c, ip: 0 };
+                let cpu = cpu_factory(initial_state, &instructions);
+                let output = cpu.collect::<Vec<u8>>();
+                println!("{:?}", output);
             }
-        })
-        .break_value()
-        .unwrap();
-    println!("{}", output);
+        }
+        "solve" => {
+            let factor = args
+                .next()
+                .expect("Factor argument not passed")
+                .parse::<u64>()
+                .expect("Could not parse factor argument to an unsigned 64 bit integer");
+            if instructions.len() > 64 {
+                eprintln!("Cannot use this solution for more than 63 instruction.");
+                eprintln!("Instructions length is the exponent of factor,");
+                eprintln!("and the result must fit in 64 bits");
+                panic!("Instructions list too long");
+            }
+            let mut a_in_base_factor = vec![0u64; instructions.len() + 1];
+            let output = loop {
+                let a = a_in_base_factor
+                    .iter()
+                    .rev()
+                    .enumerate()
+                    .map(|(exponent, a_digit)| a_digit * factor.pow(exponent as u32))
+                    .sum::<u64>();
+                let mut desired_outputs: Vec<Option<u8>> = instructions
+                    .iter()
+                    .copied()
+                    .flat_map(TryInto::try_into)
+                    .map(Option::Some)
+                    .collect();
+                let mut actual_outputs = cpu_factory(State { a, b, c, ip: 0 }, &instructions)
+                    .map(Option::Some)
+                    .collect::<Vec<Option<u8>>>();
+                desired_outputs.extend(vec![None; 1]);
+                actual_outputs.extend(vec![
+                    None;
+                    (instructions.len() + 1)
+                        .saturating_sub(actual_outputs.len())
+                ]);
+                let (reverse_disparity_index, (_actual, _desired)) = match actual_outputs
+                    .into_iter()
+                    .zip(desired_outputs)
+                    .rev()
+                    .enumerate()
+                    .find(|(_idx, (actual, desired))| actual != desired)
+                {
+                    Some(disparity) => disparity,
+                    None => break a,
+                };
+                if reverse_disparity_index == 0 {
+                    eprintln!("Could not find the answer.");
+                    eprintln!("Output's length exceeded the instruction list's length.");
+                    panic!("Could not find the answer");
+                }
+                a_in_base_factor[reverse_disparity_index] += 1;
+                if a_in_base_factor[reverse_disparity_index] >= factor {
+                    a_in_base_factor[reverse_disparity_index] = 0;
+                    a_in_base_factor[reverse_disparity_index - 1] += 1;
+                }
+            };
+            println!("{}", output);
+        }
+        _ => {
+            eprintln!("Invalid arguments.");
+            eprintln!("Usage:");
+            eprintln!("p2 brute < input");
+            eprintln!("p2 print < input");
+            eprintln!("p2 solve (factor e.g. 8) < input");
+        }
+    }
 }
 
 fn cpu_factory(initial_state: State, instructions: &[u64]) -> impl Iterator<Item = u8> + '_ {
